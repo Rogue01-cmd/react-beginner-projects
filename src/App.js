@@ -1,44 +1,75 @@
 import React from 'react';
 import './index.scss';
+import { Collection } from './Collection';
 
-function Collection({ name, images }) {
-  return (
-    <div className="collection">
-      <img className="collection__big" src={images[0]} alt="Item" />
-      <div className="collection__bottom">
-        <img className="collection__mini" src={images[1]} alt="Item" />
-        <img className="collection__mini" src={images[2]} alt="Item" />
-        <img className="collection__mini" src={images[3]} alt="Item" />
-      </div>
-      <h4>{name}</h4>
-    </div>
-  );
-}
+
+const cats = [
+  { "name": "Все" },
+  { "name": "Море" },
+  { "name": "Горы" },
+  { "name": "Архитектура" },
+  { "name": "Города" }
+]
+
 
 function App() {
+  const [collections, setCollections] = React.useState([]);
+  const [searchvalue, setSearchValue] = React.useState('');
+  const [category, setCategory] = React.useState(0);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [selected, setSelected] = React.useState(null);
+
+  React.useEffect(
+    () => {
+      setIsLoading(true);
+      fetch(`https://66d00e89181d059277dd0cbc.mockapi.io/Pho${category ? `?category=${category}` : ''}`)
+        .then((res) => res.json())
+        .then((json) => setCollections(json))
+        .catch((err)=>{
+          console.warn(err);
+          alert("Error while retrieving data")
+        })
+        .finally(() => setIsLoading(false))
+    }, [category]
+  )
+
   return (
+    <>
     <div className="App">
       <h1>Моя коллекция фотографий</h1>
       <div className="top">
         <ul className="tags">
-          <li className="active">Все</li>
-          <li>Горы</li>
-          <li>Море</li>
-          <li>Архитектура</li>
-          <li>Города</li>
+          {
+            cats.map(
+              (_category, index) => 
+                (<li className={index===category ? 'active' : ''}
+                  onClick={() => setCategory(index)}
+                  key={index}>
+                  {_category.name}
+                </li>)
+            )
+          }
         </ul>
-        <input className="search-input" placeholder="Поиск по названию" />
+        <input className="search-input" 
+        placeholder="Поиск по названию" 
+        value={searchvalue}
+        onChange={(e) => setSearchValue(e.target.value)}/>
       </div>
       <div className="content">
-        <Collection
-          name="Путешествие по миру"
-          images={[
-            'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTN8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1560840067-ddcaeb7831d2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDB8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1531219572328-a0171b4448a3?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mzl8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-            'https://images.unsplash.com/photo-1573108724029-4c46571d6490?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MzR8fGNpdHl8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-          ]}
-        />
+        { isLoading ? (<h2>Collections are loading...</h2>) :
+          (collections.filter((item) => 
+            ( 
+              item.name.toLowerCase().includes(searchvalue.toLowerCase())))
+          .map((obj, index) =>
+          (<Collection
+            key={index}
+            name={obj.name}
+            images={obj.photos}
+            />)
+          ))
+          
+        }
+        
       </div>
       <ul className="pagination">
         <li>1</li>
@@ -46,6 +77,9 @@ function App() {
         <li>3</li>
       </ul>
     </div>
+    {/* <div className='overlay'/> */}
+      
+    </>
   );
 }
 
